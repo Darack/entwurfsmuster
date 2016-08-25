@@ -78,7 +78,7 @@ int main() {
 	cout << "-------------------------" << endl;
 
 	sequence<char>::Iterator it = t2.begin();
-	*it = 'a';
+	*it = 'X';
 	cout << "write on t2!" << endl;
 	cout << "-------------------------" << endl;
 

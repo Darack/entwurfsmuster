@@ -16,11 +16,17 @@ private:
 		}
 		virtual Node* getLeft() = 0;
 		virtual Node* getRight() = 0;
-		virtual T* getKey() = 0;
+		virtual const T* getKey() const = 0;
+		virtual void setKey(const T& key) = 0;
 
-//    	friend bool operator!=(const Node& crI1, const Node& crI2) {
-//    		return ???;
-//    	}
+		// only compares leaf nodes
+    	friend bool operator==(const Node& crN1, const Node& crN2) {
+//			std::cout << "checking node... " << std::endl;
+    		if (crN1.getKey() && crN2.getKey()) {
+    			return *crN1.getKey() == *crN2.getKey();
+    		}
+    		return false;
+    	}
 
 	private:
 		unsigned* m_puiCnt;
@@ -39,8 +45,13 @@ private:
 		Node* getRight() {
 			return 0;
 		}
-		T* getKey() {
+		const T* getKey() const {
 			return m_Key;
+		}
+		void setKey(const T& key) {
+			if (key) {
+				*m_Key = key;
+			}
 		}
 
 	private:
@@ -61,8 +72,11 @@ private:
     	Node* getRight() {
         	return m_Right;
         }
-		T* getKey() {
+		const T* getKey() const {
 			return 0;
+		}
+		void setKey(const T& key) {
+			// do nothing
 		}
 
 	private:
@@ -71,8 +85,7 @@ private:
 	};
 
     // TODO test dummy
-	// TODO dummy copy and delete
-    class Dummy {
+	class Dummy {
 		friend class sequence;
     public:
     	Dummy(sequence<T>* sequence, Node* node) : seq(sequence), node2Edit(node) {}
@@ -89,21 +102,19 @@ private:
     				// temp cpy sequence
     				sequence<T> tmp(*seq);
     				// empty seq
-    				seq->empty();
+    				seq->removeNodes();
     				// copy nodes
-    				tmp.copyAndEditNodes(seq, crArg, *node2Edit->getKey());
+    				tmp.copyNodes(seq);
     				// change node to crArg
-//    				for (sequence<T>::InnerIterator iter = (*seq).ibegin(); iter!=(*seq).iend(); ++iter) {
-//    					if (**iter == *node2Edit) {
-//    						std::cout << "node found: " << (*iter)->getKey() << std::endl;
-//    						// TODO create new node and set key to crArg
-////    						*(*iter)->getKey() = crArg;
-//    					}
-//    				}
-    				// delete tmp cpy
+    				for (sequence<T>::InnerIterator iter = (*seq).ibegin(); iter!=(*seq).iend(); ++iter) {
+    					if (**iter == *node2Edit) {
+    						std::cout << "node found: " << (*iter)->getKey() << std::endl;
+    						(*iter)->setKey(crArg);
+    					}
+    				}
     			} else {
     				std::cout << "no self assignment?" << std::endl;
-    				*node2Edit->getKey() = crArg;
+    				node2Edit->setKey(crArg);
     			}
     		}
     		return *this;
@@ -268,32 +279,23 @@ public:
 	}
 
 private:
-	void empty() {
-		removeNodes();
-	}
-
 	// TODO iterativ
-	void copyAndEditNodes(sequence<T>* seq, const T& crArg1, const T& crArg2) {
-		std::cout << "copyNodes active!" << std::endl;
-		seq->m_Root = copyNode(this->m_Root, crArg1, crArg2);
+	void copyNodes(sequence<T>* seq) {
+//		std::cout << "copyNodes active!" << std::endl;
+		seq->m_Root = copyNode(this->m_Root);
 		seq->increaseCounter();
-		// TODO remove test methods
-		seq->printCounter();
-		std::cout << "seq: " << *seq << std::endl;
+//		seq->printCounter();
+//		std::cout << "seq: " << *seq << std::endl;
 	}
 
-	Node* copyNode(Node* node, const T& crArg1, const T& crArg2) {
+	Node* copyNode(Node* node) {
 		if (!node) {
 			return 0;
 		}
 		if (node->getKey() == 0) {
-			return new Inner(copyNode(node->getLeft(), crArg1, crArg2), copyNode(node->getRight(), crArg1, crArg2));
+			return new Inner(copyNode(node->getLeft()), copyNode(node->getRight()));
 		} else {
-			if (*node->getKey() == crArg2) {
-				return new Leaf(new T(crArg1));
-			} else {
-				return new Leaf(new T(*node->getKey()));
-			}
+			return new Leaf(new T(*node->getKey()));
 		}
 	}
 
