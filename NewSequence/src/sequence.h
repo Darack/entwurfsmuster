@@ -18,6 +18,10 @@ private:
 		virtual Node* getRight() = 0;
 		virtual T* getKey() = 0;
 
+//    	friend bool operator!=(const Node& crI1, const Node& crI2) {
+//    		return ???;
+//    	}
+
 	private:
 		unsigned* m_puiCnt;
 	};
@@ -82,25 +86,26 @@ private:
     		// no self assignment
     		if (*node2Edit->getKey() != crArg) {
     			if (node2Edit->getCnt() > 1) {
-    				// TODO bugfix
     				// temp cpy sequence
     				sequence<T> tmp(*seq);
+    				// empty seq
+    				seq->empty();
     				// copy nodes
-    				tmp.copyNodes(seq);
-   					// change node to crArg
-    				for (sequence<T>::InnerIterator iter = seq->ibegin(); iter!=seq->iend(); ++iter) {
-//    					if (*iter == node2Edit) {
-    						// TODO create new node and set key to crArg
-    						*(*iter)->getKey() = crArg;
+    				tmp.copyAndEditNodes(seq, crArg, *node2Edit->getKey());
+    				// change node to crArg
+//    				for (sequence<T>::InnerIterator iter = (*seq).ibegin(); iter!=(*seq).iend(); ++iter) {
+//    					if (**iter == *node2Edit) {
+//    						std::cout << "node found: " << (*iter)->getKey() << std::endl;
+//    						// TODO create new node and set key to crArg
+////    						*(*iter)->getKey() = crArg;
 //    					}
-    				}
+//    				}
     				// delete tmp cpy
     			} else {
     				std::cout << "no self assignment?" << std::endl;
     				*node2Edit->getKey() = crArg;
     			}
     		}
-//    		delete this;
     		return *this;
     	}
 
@@ -180,9 +185,9 @@ public:
 //    	T& operator*() {
 //    		return *(getNextLeaf()->getKey());
 //    	}
-    	Dummy& operator*() {
+    	Dummy operator*() {
     		// TODO ????
-    		return *(new Dummy(seq, stack.top()));
+    		return Dummy(seq, stack.top());
     	}
 
 	protected:
@@ -263,19 +268,32 @@ public:
 	}
 
 private:
-	// TODO iterativ
-	void copyNodes(sequence<T>* seq) {
-		seq->m_Root = copyNode(this->m_Root);
+	void empty() {
+		removeNodes();
 	}
 
-	Node* copyNode(Node* node) {
+	// TODO iterativ
+	void copyAndEditNodes(sequence<T>* seq, const T& crArg1, const T& crArg2) {
+		std::cout << "copyNodes active!" << std::endl;
+		seq->m_Root = copyNode(this->m_Root, crArg1, crArg2);
+		seq->increaseCounter();
+		// TODO remove test methods
+		seq->printCounter();
+		std::cout << "seq: " << *seq << std::endl;
+	}
+
+	Node* copyNode(Node* node, const T& crArg1, const T& crArg2) {
 		if (!node) {
 			return 0;
 		}
 		if (node->getKey() == 0) {
-			return new Inner(copyNode(node->getLeft()), copyNode(node->getRight()));
+			return new Inner(copyNode(node->getLeft(), crArg1, crArg2), copyNode(node->getRight(), crArg1, crArg2));
 		} else {
-			return new Leaf(new T(*node->getKey()));
+			if (*node->getKey() == crArg2) {
+				return new Leaf(new T(crArg1));
+			} else {
+				return new Leaf(new T(*node->getKey()));
+			}
 		}
 	}
 
@@ -315,7 +333,7 @@ public:
 		for(typename sequence<T>::ConstIterator iter = crArg.cbegin(); iter != crArg.cend(); ++iter) {
 			os << *iter << " ";
 		}
-		os << std::endl;
+//		os << std::endl;
 		return os;
 	}
 
